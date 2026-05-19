@@ -722,13 +722,7 @@ textarea{resize:vertical;min-height:80px}
     <div class="sh-d">Your responses will be sent directly to your Growfin contact so they can prepare your personalised implementation plan &mdash; usually within 1&ndash;2 business days.</div>
     <div class="sh-time">&#x23F1; Just a few seconds</div>
   </div>
-  <div class="fg">
-    <div class="fgh"><div class="fgh-t">Your Growfin contact</div></div>
-    <div class="fgb">
-      
-      </div>
-    </div>
-  </div>
+
   <div class="callout c-info"><span class="ci">&#x1F512;</span><span><strong>Your answers are private.</strong> This information is only shared with your Growfin Account Executive and used solely to prepare your Statement of Work and implementation plan.</span></div>
   <div class="fg">
     <div class="fgh"><div class="fgh-t">Anything else to add?</div></div>
@@ -1211,7 +1205,7 @@ async function submitF(){
     if(errTxt) errTxt.textContent=
       msg.includes('formspree_id')?'Form endpoint not configured — contact your Growfin SE.':
       msg.includes('403')||msg.includes('host')?'Domain not whitelisted in Formspree — contact your Growfin SE.':
-      msg.includes('failed to fetch')||msg.includes('network')?'Network error — please check your connection and try again.':
+      msg.includes('failed to fetch')||msg.includes('network')?'If you are testing locally (file://), please upload to GitHub Pages first — the form must be served over HTTPS to submit. If you are on the live site, please check your connection and try again.':
       'Submission error: '+(err.message||'unknown')+'. Please try again.';
     nb.disabled=false;nb.textContent='Send to Growfin';
   }
