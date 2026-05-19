@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Growfin — SOW Approval Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand:#1B4DDE;--brand-d:#0F2E9E;--brand-l:#EEF3FF;--brand-mid:#93AEFF;
+  --ink:#0A0F1E;--ink-2:#3A4560;--ink-3:#8A95A8;
+  --border:#E2E8F4;--surf:#F4F6FB;--white:#FFFFFF;
+  --green:#0E7A4A;--green-l:#E7F7EF;
+  --amber:#B86800;--amber-l:#FFF6E0;
+  --red:#C42B2B;--red-l:#FEF0F0;
+  --display:'Syne',sans-serif;--sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--surf);min-height:100vh}
+
+/* ── Top bar ── */
+.topbar{background:var(--ink);height:56px;display:flex;align-items:center;padding:0 28px;position:sticky;top:0;z-index:100;gap:20px}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.logo-mark{width:28px;height:28px;background:var(--brand);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:14px;height:14px}
+.logo-name{font-family:var(--display);font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.logo-name b{color:var(--brand-mid)}
+.topbar-title{font-size:12px;color:rgba(255,255,255,.4);font-weight:500;border-left:1px solid rgba(255,255,255,.12);padding-left:16px;margin-left:4px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:100px;padding:5px 12px 5px 5px}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:var(--display)}
+.user-name{font-size:12px;color:rgba(255,255,255,.7);font-weight:500}
+.sign-out-btn{background:none;border:none;color:rgba(255,255,255,.35);font-size:11px;cursor:pointer;font-family:var(--sans);padding:4px 8px;border-radius:4px}
+.sign-out-btn:hover{color:rgba(255,255,255,.7)}
+
+/* ── Auth screen ── */
+.auth-screen{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.auth-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:48px;max-width:420px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(10,15,30,.08)}
+.auth-icon{width:72px;height:72px;background:var(--brand-l);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:32px}
+.auth-title{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:8px}
+.auth-sub{font-size:14px;color:var(--ink-3);line-height:1.6;margin-bottom:28px}
+.google-btn{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:12px 20px;font-family:var(--sans);font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;width:100%;transition:all .15s;text-decoration:none}
+.google-btn:hover{border-color:var(--brand);background:var(--brand-l)}
+.google-btn svg{width:20px;height:20px;flex-shrink:0}
+
+/* ── Main layout ── */
+.main{max-width:1400px;margin:0 auto;padding:24px 28px 80px}
+
+/* ── Stats row ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
+.stat-val{font-family:var(--display);font-size:28px;font-weight:700;color:var(--ink);letter-spacing:-1px;line-height:1}
+.stat-lbl{font-size:12px;color:var(--ink-3);margin-top:4px;font-weight:500}
+.stat.pending .stat-val{color:var(--amber)}
+.stat.approved .stat-val{color:var(--green)}
+.stat.rejected .stat-val{color:var(--red)}
+
+/* ── View tabs ── */
+.view-tabs{display:flex;gap:2px;background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:3px;width:fit-content;margin-bottom:20px}
+.vt{padding:7px 16px;border-radius:6px;font-size:13px;font-weight:500;color:var(--ink-3);cursor:pointer;border:none;background:none;font-family:var(--sans);transition:all .15s}
+.vt.active{background:var(--white);color:var(--ink);box-shadow:0 1px 3px rgba(10,15,30,.08)}
+
+/* ── Toolbar ── */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.search-wrap{position:relative;flex:1;max-width:320px}
+.search-wrap input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:8px 12px 8px 34px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--white);outline:none;transition:border-color .15s}
+.search-wrap input:focus{border-color:var(--brand)}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-3);width:14px;height:14px}
+.filter-select{border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-family:var(--sans);font-size:13px;color:var(--ink-2);background:var(--white);outline:none;cursor:pointer}
+.btn-add{background:var(--brand);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-family:var(--display);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;margin-left:auto;transition:background .15s}
+.btn-add:hover{background:var(--brand-d)}
+.btn-refresh{background:var(--white);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;font-family:var(--sans);font-size:13px;color:var(--ink-2);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.btn-refresh:hover{border-color:var(--brand);color:var(--brand)}
+
+/* ── Table ── */
+.table-wrap{background:var(--white);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl thead{background:var(--surf)}
+.tbl th{padding:10px 14px;text-align:left;font-weight:600;font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr.clickable{cursor:pointer;transition:background .1s}
+.tbl tr.clickable:hover td{background:var(--surf)}
+
+/* ── Cell components ── */
+.sow-id{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-weight:500}
+.customer-name{font-weight:600;color:var(--ink)}
+.ae-se{font-size:12px;color:var(--ink-3);margin-top:2px}
+.module-pills{display:flex;gap:4px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+.pill.coll{background:#E8F4FF;color:#0055CC}
+.pill.cash{background:#FFF0E6;color:#CC4400}
+.pill.portal{background:var(--green-l);color:var(--green)}
+.dev-count{display:inline-flex;align-items:center;gap:4px;font-weight:600}
+.dev-count.zero{color:var(--green)}
+.dev-count.has{color:var(--amber)}
+.cost-val{font-family:var(--mono);font-weight:600;color:var(--ink)}
+.timeline-val{font-size:12px;color:var(--ink-2)}
+.urgency{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600}
+.urgency.red{color:var(--red)}
+.urgency.amber{color:var(--amber)}
+.urgency.ok{color:var(--green)}
+.wait-days{font-size:12px;color:var(--ink-3)}
+
+/* ── Status badge ── */
+.status{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+.status.pending{background:var(--amber-l);color:var(--amber)}
+.status.approved{background:var(--green-l);color:var(--green)}
+.status.auto-approved{background:#E6F4FF;color:#0055CC}
+.status.rejected{background:var(--red-l);color:var(--red)}
+.status.changes{background:#F3E8FF;color:#7C3AED}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* ── Action buttons in table ── */
+.action-wrap{display:flex;gap:6px}
+.btn-approve{background:var(--green-l);color:var(--green);border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.btn-approve:hover{background:var(--green);color:#fff}
+.btn-reject{background:var(--red-l);color:var(--red);border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.btn-reject:hover{background:var(--red);color:#fff}
+.btn-view{background:var(--brand-l);color:var(--brand);border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .15s}
+.btn-view:hover{background:var(--brand);color:#fff}
+
+/* ── Detail panel (slide-in) ── */
+.overlay{position:fixed;inset:0;background:rgba(10,15,30,.4);backdrop-filter:blur(3px);z-index:200;display:none;align-items:flex-start;justify-content:flex-end}
+.overlay.show{display:flex}
+.detail-panel{background:var(--white);width:480px;height:100vh;overflow-y:auto;box-shadow:-8px 0 40px rgba(10,15,30,.12);display:flex;flex-direction:column}
+.dp-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;position:sticky;top:0;background:var(--white);z-index:10}
+.dp-close{background:var(--surf);border:1px solid var(--border);border-radius:6px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--ink-3);flex-shrink:0;margin-left:auto}
+.dp-title{font-family:var(--display);font-size:16px;font-weight:700;color:var(--ink)}
+.dp-body{padding:20px 24px;flex:1}
+.dp-section{margin-bottom:20px}
+.dp-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin-bottom:10px}
+.dp-row{display:flex;gap:8px;margin-bottom:7px;font-size:13px}
+.dp-key{color:var(--ink-3);min-width:140px;flex-shrink:0}
+.dp-val{color:var(--ink);font-weight:500}
+.dp-divider{height:1px;background:var(--border);margin:16px 0}
+
+/* ── Deviation items ── */
+.dev-item{background:var(--amber-l);border:1px solid #F5C842;border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:13px}
+.dev-item-title{font-weight:600;color:var(--amber);margin-bottom:3px}
+.dev-item-detail{color:var(--ink-2);font-size:12px}
+.dev-item.c1{background:var(--red-l);border-color:var(--red)}
+.dev-item.c1 .dev-item-title{color:var(--red)}
+.dev-item.c2{background:var(--amber-l);border-color:#F5C842}
+.dev-item.c3{background:var(--brand-l);border-color:var(--brand-mid)}
+.dev-item.c3 .dev-item-title{color:var(--brand)}
+
+/* ── Approval action in panel ── */
+.dp-footer{padding:16px 24px;border-top:1px solid var(--border);flex-shrink:0;position:sticky;bottom:0;background:var(--white)}
+.dp-comment{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-family:var(--sans);font-size:13px;resize:vertical;min-height:80px;outline:none;margin-bottom:12px;transition:border-color .15s}
+.dp-comment:focus{border-color:var(--brand)}
+.dp-actions{display:flex;gap:8px}
+.dp-btn-approve{flex:1;background:var(--green);color:#fff;border:none;border-radius:8px;padding:11px;font-family:var(--display);font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.dp-btn-approve:hover{background:#0a6a3e}
+.dp-btn-reject{flex:1;background:var(--surf);color:var(--red);border:1.5px solid var(--red);border-radius:8px;padding:11px;font-family:var(--display);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.dp-btn-reject:hover{background:var(--red);color:#fff}
+.dp-btn-changes{flex:1;background:var(--surf);color:#7C3AED;border:1.5px solid #C4B5FD;border-radius:8px;padding:11px;font-family:var(--display);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.dp-btn-changes:hover{background:#F3E8FF}
+
+/* ── Add SOW modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(10,15,30,.5);backdrop-filter:blur(4px);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border-radius:14px;max-width:640px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(10,15,30,.2)}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:5}
+.modal-title{font-family:var(--display);font-size:18px;font-weight:700;color:var(--ink)}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:22px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px}
+.modal-close:hover{background:var(--surf)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:var(--white)}
+
+/* ── Form fields in modal ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-field{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-family:var(--sans);font-size:13px;color:var(--ink);background:var(--white);outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--brand)}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A8899' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
+.form-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin:16px 0 10px;padding-top:16px;border-top:1px solid var(--border)}
+.form-section-title:first-child{border-top:none;padding-top:0;margin-top:0}
+.dev-adder{border:1.5px dashed var(--border);border-radius:8px;padding:14px;margin-bottom:8px}
+.dev-adder-row{display:grid;grid-template-columns:100px 1fr auto;gap:8px;align-items:center}
+.btn-add-dev{background:var(--brand-l);color:var(--brand);border:none;border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.btn-rm-dev{background:var(--red-l);color:var(--red);border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+
+/* ── Buttons ── */
+.btn-primary{background:var(--brand);color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:var(--display);font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-primary:hover{background:var(--brand-d)}
+.btn-secondary{background:var(--surf);color:var(--ink-2);border:1.5px solid var(--border);border-radius:8px;padding:10px 16px;font-family:var(--sans);font-size:13px;cursor:pointer;transition:all .15s}
+.btn-secondary:hover{border-color:var(--ink-2)}
+
+/* ── Empty & loading states ── */
+.empty-state{text-align:center;padding:60px 20px;color:var(--ink-3)}
+.empty-state .es-icon{font-size:40px;margin-bottom:12px}
+.empty-state .es-title{font-size:15px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.loading-row td{text-align:center;padding:40px;color:var(--ink-3);font-size:13px}
+.spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--brand);border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:500;opacity:0;transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .detail-panel{width:100vw}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="#" class="logo">
+    <div class="logo-mark"><svg viewBox="0 0 16 16" fill="none"><rect x="1" y="7" width="3.5" height="7" rx="1" fill="white"/><rect x="6" y="4.5" width="3.5" height="9.5" rx="1" fill="white" opacity=".8"/><rect x="11" y="2" width="3.5" height="12" rx="1" fill="white" opacity=".6"/></svg></div>
+    <span class="logo-name">Grow<b>fin</b></span>
+  </a>
+  <span class="topbar-title">SOW Approval Dashboard</span>
+  <div class="topbar-right">
+    <div class="user-chip" id="user-chip" style="display:none">
+      <div class="user-av" id="user-av">?</div>
+      <span class="user-name" id="user-name">Loading…</span>
+    </div>
+    <button class="sign-out-btn" id="sign-out-btn" style="display:none" onclick="signOut()">Sign out</button>
+  </div>
+</div>
+
+<!-- Auth screen -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-icon">📋</div>
+    <div class="auth-title">SOW Approval Dashboard</div>
+    <div class="auth-sub">Sign in with your Growfin Google account to view and manage Statement of Work approvals.</div>
+    <button class="google-btn" onclick="signIn()">
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- Main dashboard -->
+<div class="main" id="main-dashboard" style="display:none">
+
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat pending"><div class="stat-val" id="stat-pending">—</div><div class="stat-lbl">Pending approval</div></div>
+    <div class="stat approved"><div class="stat-val" id="stat-approved">—</div><div class="stat-lbl">Approved this month</div></div>
+    <div class="stat"><div class="stat-val" id="stat-auto">—</div><div class="stat-lbl">Auto-approved</div></div>
+    <div class="stat"><div class="stat-val" id="stat-value" style="font-size:20px">—</div><div class="stat-lbl">Total pipeline value</div></div>
+  </div>
+
+  <!-- View tabs -->
+  <div class="view-tabs">
+    <button class="vt active" onclick="setView('all')" id="vt-all">All SOWs</button>
+    <button class="vt" onclick="setView('pending')" id="vt-pending">Needs approval</button>
+    <button class="vt" onclick="setView('mine')" id="vt-mine">My deals</button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#8A95A8" stroke-width="1.5"/><path d="M11 11l3 3" stroke="#8A95A8" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input type="text" placeholder="Search customer, AE, SE…" id="search-input" oninput="filterRows()">
+    </div>
+    <select class="filter-select" id="status-filter" onchange="filterRows()">
+      <option value="">All statuses</option>
+      <option value="Pending">Pending</option>
+      <option value="Auto-Approved">Auto-approved</option>
+      <option value="Approved">Approved</option>
+      <option value="Rejected">Rejected</option>
+      <option value="Changes Requested">Changes requested</option>
+    </select>
+    <select class="filter-select" id="module-filter" onchange="filterRows()">
+      <option value="">All modules</option>
+      <option value="Collections">Collections only</option>
+      <option value="Cash Application">Incl. Cash App</option>
+    </select>
+    <button class="btn-refresh" onclick="loadData()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M1 8a7 7 0 1 0 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M1 4v4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Refresh
+    </button>
+    <button class="btn-add" onclick="openAddModal()">+ Submit SOW</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table class="tbl" id="main-table">
+      <thead>
+        <tr>
+          <th>SOW ID</th>
+          <th>Customer</th>
+          <th>AE / SE</th>
+          <th>Modules</th>
+          <th>ERP</th>
+          <th>Cost</th>
+          <th>Timeline</th>
+          <th>Deviations</th>
+          <th>Close date</th>
+          <th>Waiting</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tbl-body">
+        <tr class="loading-row"><td colspan="12"><span class="spin"></span>Loading SOWs…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Detail panel -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-panel" id="detail-panel">
+    <div class="dp-header">
+      <div>
+        <div class="dp-title" id="dp-title">SOW Details</div>
+        <div class="sow-id" id="dp-sow-id"></div>
+      </div>
+      <button class="dp-close" onclick="closeDetail()">×</button>
+    </div>
+    <div class="dp-body" id="dp-body"></div>
+    <div class="dp-footer" id="dp-footer" style="display:none">
+      <textarea class="dp-comment" id="dp-comment" placeholder="Add a comment (optional — shown to AE/SE on approval or rejection)…"></textarea>
+      <div class="dp-actions">
+        <button class="dp-btn-approve" onclick="approveSOW()">✓ Approve</button>
+        <button class="dp-btn-changes" onclick="requestChanges()">↩ Request changes</button>
+        <button class="dp-btn-reject" onclick="rejectSOW()">✗ Reject</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add SOW modal -->
+<div class="modal-overlay" id="add-modal" onclick="if(event.target===this)closeAddModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Submit SOW for approval</div>
+      <button class="modal-close" onclick="closeAddModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section-title">Deal information</div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Customer name *</label><input class="form-input" id="f-customer" placeholder="e.g. Overture Promotions" required></div>
+        <div class="form-field"><label class="form-label">Expected close date *</label><input class="form-input" id="f-close-date" placeholder="DD-Mon-YYYY" required></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">AE name *</label><input class="form-input" id="f-ae" placeholder="e.g. Jane Smith" required></div>
+        <div class="form-field"><label class="form-label">SE name *</label><input class="form-input" id="f-se" placeholder="e.g. Alex Johnson" required></div>
+      </div>
+
+      <div class="form-section-title">Scope</div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Modules *</label>
+          <select class="form-input form-select" id="f-modules">
+            <option value="Collections">Collections only</option>
+            <option value="Collections, Cash Application">Collections + Cash Application</option>
+            <option value="Collections, Customer Portal">Collections + Customer Portal</option>
+            <option value="Collections, Cash Application, Customer Portal">Collections + Cash App + Portal</option>
+          </select>
+        </div>
+        <div class="form-field"><label class="form-label">ERP</label><input class="form-input" id="f-erp" placeholder="e.g. NetSuite (Native API)"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">Implementation cost ($) *</label><input class="form-input" id="f-cost" type="number" placeholder="e.g. 25000"></div>
+        <div class="form-field"><label class="form-label">Timeline (weeks) *</label><input class="form-input" id="f-timeline" type="number" placeholder="e.g. 14"></div>
+      </div>
+      <div class="form-field"><label class="form-label">Integrations</label><input class="form-input" id="f-integrations" placeholder="e.g. Salesforce, Slack"></div>
+
+      <div class="form-section-title">Deviation items (C1 / C2 / C3)</div>
+      <div id="dev-items-container"></div>
+      <button class="btn-add-dev" onclick="addDevItem()">+ Add deviation item</button>
+
+      <div class="form-section-title">Links</div>
+      <div class="form-row">
+        <div class="form-field"><label class="form-label">SOW document link</label><input class="form-input" id="f-sow-link" placeholder="https://…"></div>
+        <div class="form-field"><label class="form-label">Pricing calculator link</label><input class="form-input" id="f-calc-link" placeholder="https://…"></div>
+      </div>
+      <div class="form-field"><label class="form-label">Notes for approver</label><textarea class="form-input" id="f-notes" rows="3" placeholder="Any context Manoj should know before approving…" style="resize:vertical"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-primary" onclick="submitSOW()">Submit for approval</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with your OAuth client ID
+const SHEET_ID  = 'YOUR_GOOGLE_SHEET_ID';  // Replace with your Google Sheet ID
+const SCOPES    = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
+const SHEET_NAME = 'SOWs';
+const SHEET_RANGE = SHEET_NAME + '!A:Z';
+
+// Growfin team roles (determines what they can see/do)
+const APPROVER_EMAIL  = 'manoj.abburi@growfin.ai';
+const CEO_EMAIL       = 'aravind@growfin.ai';
+
+// ── State ─────────────────────────────────────────────────────────────────
+let tokenClient, accessToken, currentUser;
+let allSOWs = [];
+let currentView = 'all';
+let currentSOW = null;
+let devItemCount = 0;
+
+// Sheet columns (0-indexed) — must match the Google Sheet headers
+const COL = {
+  SOW_ID:        0,  // A
+  CUSTOMER:      1,  // B
+  AE:            2,  // C
+  SE:            3,  // D
+  CLOSE_DATE:    4,  // E
+  SUBMITTED:     5,  // F
+  MODULES:       6,  // G
+  ERP:           7,  // H
+  INTEGRATIONS:  8,  // I
+  COST:          9,  // J
+  TIMELINE:      10, // K
+  DEV_COUNT:     11, // L
+  C1:            12, // M
+  C2:            13, // N
+  C3:            14, // O
+  DEV_DETAIL:    15, // P (JSON array)
+  AUTO_APPROVED: 16, // Q
+  STATUS:        17, // R
+  APPROVER:      18, // S
+  COMMENT:       19, // T
+  APPROVED_DATE: 20, // U
+  SOW_LINK:      21, // V
+  CALC_LINK:     22, // W
+  AE_EMAIL:      23, // X
+  SE_EMAIL:      24, // Y
+  NOTES:         25, // Z
+};
+
+const HEADERS = [
+  'SOW ID','Customer','AE','SE','Close Date','Submitted',
+  'Modules','ERP','Integrations','Cost','Timeline (weeks)',
+  'Deviation Count','C1 Count','C2 Count','C3 Count','Deviation Detail',
+  'Auto Approved','Status','Approver','Approver Comment','Approval Date',
+  'SOW Link','Calc Link','AE Email','SE Email','Notes'
+];
+
+// ── Google Identity Services init ─────────────────────────────────────────
+function initGoogleAuth() {
+  if (typeof google === 'undefined') {
+    setTimeout(initGoogleAuth, 500);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback: handleCredential,
+    auto_select: false,
+  });
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: handleToken,
+  });
+}
+
+function signIn() {
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+function handleToken(tokenResponse) {
+  if (tokenResponse.error) { showToast('Sign-in failed: ' + tokenResponse.error, 'error'); return; }
+  accessToken = tokenResponse.access_token;
+  fetchUserInfo();
+}
+
+async function fetchUserInfo() {
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: { Authorization: 'Bearer ' + accessToken }
+    });
+    currentUser = await res.json();
+    showDashboard();
+  } catch(e) {
+    showToast('Could not fetch user info', 'error');
+  }
+}
+
+function showDashboard() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('main-dashboard').style.display = 'block';
+  document.getElementById('user-chip').style.display = 'flex';
+  document.getElementById('sign-out-btn').style.display = 'block';
+  const name = currentUser.name || currentUser.email;
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('user-av').textContent = name.charAt(0).toUpperCase();
+  // Hide submit button for CEO (read-only)
+  if (currentUser.email === CEO_EMAIL) {
+    document.querySelector('.btn-add').style.display = 'none';
+  }
+  // Show "Mine" tab only for AE/SE (not approver/CEO)
+  if (currentUser.email === APPROVER_EMAIL || currentUser.email === CEO_EMAIL) {
+    document.getElementById('vt-mine').style.display = 'none';
+    setView('pending');
+  }
+  loadData();
+}
+
+function signOut() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken);
+  accessToken = null; currentUser = null; allSOWs = [];
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('main-dashboard').style.display = 'none';
+  document.getElementById('user-chip').style.display = 'none';
+  document.getElementById('sign-out-btn').style.display = 'none';
+}
+
+// ── Google Sheets API ─────────────────────────────────────────────────────
+async function sheetsGet(range) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}`;
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+  if (!res.ok) throw new Error('Sheets read error: ' + res.status);
+  return res.json();
+}
+
+async function sheetsAppend(values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_RANGE)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values }),
+  });
+  if (!res.ok) throw new Error('Sheets append error: ' + res.status);
+  return res.json();
+}
+
+async function sheetsUpdate(row, col, value) {
+  // row is 1-indexed (1 = header, 2 = first data row)
+  const colLetter = String.fromCharCode(65 + col);
+  const range = `${SHEET_NAME}!${colLetter}${row}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: [[value]] }),
+  });
+  if (!res.ok) throw new Error('Sheets update error: ' + res.status);
+  return res.json();
+}
+
+async function sheetsUpdateRow(row, values) {
+  const range = `${SHEET_NAME}!A${row}:Z${row}`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values: [values] }),
+  });
+  if (!res.ok) throw new Error('Sheets update row error: ' + res.status);
+  return res.json();
+}
+
+async function ensureHeaders() {
+  try {
+    const data = await sheetsGet(SHEET_NAME + '!A1:Z1');
+    if (!data.values || !data.values[0] || data.values[0][0] !== 'SOW ID') {
+      // Write headers
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME+'!A1:Z1')}?valueInputOption=USER_ENTERED`;
+      await fetch(url, {
+        method: 'PUT',
+        headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values: [HEADERS] }),
+      });
+    }
+  } catch(e) { console.warn('ensureHeaders:', e.message); }
+}
+
+// ── Load data ─────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    showLoading();
+    await ensureHeaders();
+    const data = await sheetsGet(SHEET_RANGE);
+    if (!data.values || data.values.length < 2) {
+      allSOWs = [];
+    } else {
+      allSOWs = data.values.slice(1).map((row, i) => rowToSOW(row, i + 2));
+    }
+    renderStats();
+    filterRows();
+  } catch(e) {
+    showToast('Failed to load data: ' + e.message, 'error');
+    document.getElementById('tbl-body').innerHTML = '<tr class="loading-row"><td colspan="12">Error loading data. Check your Sheet ID and permissions.</td></tr>';
+  }
+}
+
+function rowToSOW(row, sheetRow) {
+  const g = (col) => (row[col] || '').toString().trim();
+  return {
+    sheetRow,
+    sowId: g(COL.SOW_ID),
+    customer: g(COL.CUSTOMER),
+    ae: g(COL.AE),
+    se: g(COL.SE),
+    closeDate: g(COL.CLOSE_DATE),
+    submitted: g(COL.SUBMITTED),
+    modules: g(COL.MODULES),
+    erp: g(COL.ERP),
+    integrations: g(COL.INTEGRATIONS),
+    cost: g(COL.COST),
+    timeline: g(COL.TIMELINE),
+    devCount: parseInt(g(COL.DEV_COUNT)) || 0,
+    c1: parseInt(g(COL.C1)) || 0,
+    c2: parseInt(g(COL.C2)) || 0,
+    c3: parseInt(g(COL.C3)) || 0,
+    devDetail: (() => { try { return JSON.parse(g(COL.DEV_DETAIL)); } catch(e) { return []; } })(),
+    autoApproved: g(COL.AUTO_APPROVED) === 'TRUE' || g(COL.AUTO_APPROVED) === 'Yes',
+    status: g(COL.STATUS) || 'Pending',
+    approver: g(COL.APPROVER),
+    comment: g(COL.COMMENT),
+    approvedDate: g(COL.APPROVED_DATE),
+    sowLink: g(COL.SOW_LINK),
+    calcLink: g(COL.CALC_LINK),
+    aeEmail: g(COL.AE_EMAIL),
+    seEmail: g(COL.SE_EMAIL),
+    notes: g(COL.NOTES),
+  };
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+function renderStats() {
+  const now = new Date();
+  const pending = allSOWs.filter(s => s.status === 'Pending').length;
+  const thisMonth = allSOWs.filter(s => {
+    if (s.status !== 'Approved' && s.status !== 'Auto-Approved') return false;
+    const d = new Date(s.approvedDate);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+  const auto = allSOWs.filter(s => s.autoApproved).length;
+  const totalValue = allSOWs.reduce((sum, s) => sum + (parseFloat(s.cost) || 0), 0);
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-approved').textContent = thisMonth;
+  document.getElementById('stat-auto').textContent = auto;
+  document.getElementById('stat-value').textContent = '$' + Math.round(totalValue/1000) + 'k';
+}
+
+// ── Table rendering ────────────────────────────────────────────────────────
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('.vt').forEach(b => b.classList.remove('active'));
+  document.getElementById('vt-' + view)?.classList.add('active');
+  filterRows();
+}
+
+function filterRows() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const statusF = document.getElementById('status-filter').value;
+  const moduleF = document.getElementById('module-filter').value;
+  let rows = allSOWs;
+  if (currentView === 'pending') rows = rows.filter(s => s.status === 'Pending');
+  if (currentView === 'mine' && currentUser) {
+    rows = rows.filter(s =>
+      s.aeEmail === currentUser.email || s.seEmail === currentUser.email ||
+      s.ae.toLowerCase().includes(currentUser.given_name?.toLowerCase() || '') ||
+      s.se.toLowerCase().includes(currentUser.given_name?.toLowerCase() || '')
+    );
+  }
+  if (search) rows = rows.filter(s =>
+    s.customer.toLowerCase().includes(search) ||
+    s.ae.toLowerCase().includes(search) ||
+    s.se.toLowerCase().includes(search) ||
+    s.sowId.toLowerCase().includes(search)
+  );
+  if (statusF) rows = rows.filter(s => s.status === statusF);
+  if (moduleF) rows = rows.filter(s => s.modules.includes(moduleF));
+  renderTable(rows);
+}
+
+function renderTable(rows) {
+  const tbody = document.getElementById('tbl-body');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="12"><div class="empty-state"><div class="es-icon">📭</div><div class="es-title">No SOWs found</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(s => rowHTML(s)).join('');
+}
+
+function rowHTML(s) {
+  const closeDate = parseDate(s.closeDate);
+  const daysToClose = closeDate ? Math.round((closeDate - new Date()) / 86400000) : null;
+  const submittedDate = parseDate(s.submitted);
+  const daysWaiting = submittedDate && s.status === 'Pending' ? Math.round((new Date() - submittedDate) / 86400000) : null;
+
+  const urgencyHTML = daysToClose !== null
+    ? `<span class="urgency ${daysToClose <= 3 ? 'red' : daysToClose <= 7 ? 'amber' : 'ok'}">${daysToClose <= 0 ? '⚠ ' : ''}${daysToClose}d</span>`
+    : s.closeDate || '—';
+
+  const devHTML = s.devCount === 0
+    ? `<span class="dev-count zero">✓ 0</span>`
+    : `<span class="dev-count has">⚠ ${s.devCount}</span><span style="font-size:11px;color:var(--ink-3);margin-left:4px">(${[s.c1?'C1:'+s.c1:'',s.c2?'C2:'+s.c2:'',s.c3?'C3:'+s.c3:''].filter(Boolean).join(' ')})</span>`;
+
+  const modulePills = s.modules.split(',').map(m => m.trim()).filter(Boolean)
+    .map(m => `<span class="pill ${m.includes('Cash')?'cash':m.includes('Portal')?'portal':'coll'}">${m.replace('Collections','Coll.').replace('Cash Application','Cash App').replace('Customer Portal','Portal')}</span>`).join('');
+
+  const canApprove = currentUser && currentUser.email === APPROVER_EMAIL && s.status === 'Pending' && s.devCount > 0;
+  const actionsHTML = `<div class="action-wrap">
+    ${canApprove ? `<button class="btn-approve" onclick="event.stopPropagation();quickApprove(${s.sheetRow})">✓</button><button class="btn-reject" onclick="event.stopPropagation();openDetail(${s.sheetRow},true)">✗</button>` : ''}
+    <button class="btn-view" onclick="event.stopPropagation();openDetail(${s.sheetRow},false)">View</button>
+  </div>`;
+
+  return `<tr class="clickable" onclick="openDetail(${s.sheetRow}, false)">
+    <td><span class="sow-id">${s.sowId}</span></td>
+    <td><div class="customer-name">${esc(s.customer)}</div><div class="ae-se">${esc(s.ae)} / ${esc(s.se)}</div></td>
+    <td><div class="ae-se">${esc(s.ae)}</div><div class="ae-se">${esc(s.se)}</div></td>
+    <td><div class="module-pills">${modulePills}</div></td>
+    <td><span style="font-size:12px">${esc(s.erp)||'—'}</span></td>
+    <td><span class="cost-val">${s.cost ? '$'+Number(s.cost).toLocaleString() : '—'}</span></td>
+    <td><span class="timeline-val">${s.timeline ? s.timeline+'w' : '—'}</span></td>
+    <td>${devHTML}</td>
+    <td>${urgencyHTML}</td>
+    <td>${daysWaiting !== null ? `<span class="wait-days">${daysWaiting}d</span>` : '—'}</td>
+    <td>${statusBadge(s.status, s.autoApproved)}</td>
+    <td>${actionsHTML}</td>
+  </tr>`;
+}
+
+function statusBadge(status, auto) {
+  if (auto && (status === 'Approved' || status === 'Auto-Approved')) {
+    return `<span class="status auto-approved"><span class="status-dot"></span>Auto-approved</span>`;
+  }
+  const cls = {Pending:'pending',Approved:'approved',Rejected:'rejected','Changes Requested':'changes','Auto-Approved':'auto-approved'}[status] || 'pending';
+  return `<span class="status ${cls}"><span class="status-dot"></span>${status}</span>`;
+}
+
+// ── Detail panel ──────────────────────────────────────────────────────────
+function openDetail(sheetRow, focusApproval) {
+  currentSOW = allSOWs.find(s => s.sheetRow === sheetRow);
+  if (!currentSOW) return;
+  const s = currentSOW;
+  document.getElementById('dp-title').textContent = s.customer;
+  document.getElementById('dp-sow-id').textContent = s.sowId;
+
+  const canApprove = currentUser && currentUser.email === APPROVER_EMAIL && s.status === 'Pending';
+
+  let html = '';
+  const sec = (title, rows) => {
+    const r = rows.filter(x => x[1]);
+    if (!r.length) return '';
+    return `<div class="dp-section"><div class="dp-section-title">${title}</div>${r.map(([k,v]) => `<div class="dp-row"><span class="dp-key">${k}</span><span class="dp-val">${v}</span></div>`).join('')}</div>`;
+  };
+
+  html += sec('Deal', [
+    ['Customer', esc(s.customer)],
+    ['AE', esc(s.ae)],
+    ['SE', esc(s.se)],
+    ['Close date', s.closeDate],
+    ['Submitted', s.submitted],
+  ]);
+
+  html += sec('Scope', [
+    ['Modules', s.modules],
+    ['ERP', s.erp],
+    ['Integrations', s.integrations || 'None'],
+    ['Cost', s.cost ? '$' + Number(s.cost).toLocaleString() : '—'],
+    ['Timeline', s.timeline ? s.timeline + ' weeks' : '—'],
+  ]);
+
+  if (s.devCount > 0) {
+    html += '<div class="dp-section"><div class="dp-section-title">⚠ Deviation items</div>';
+    if (s.devDetail && s.devDetail.length) {
+      s.devDetail.forEach(d => {
+        html += `<div class="dev-item ${d.type?.toLowerCase()}">
+          <div class="dev-item-title">${d.type?.toUpperCase() || 'DEV'} — ${esc(d.title)}</div>
+          <div class="dev-item-detail">${esc(d.detail || '')}</div>
+        </div>`;
+      });
+    } else {
+      html += `<p style="font-size:13px;color:var(--ink-3)">C1: ${s.c1} · C2: ${s.c2} · C3: ${s.c3}</p>`;
+    }
+    html += '</div>';
+  } else {
+    html += '<div class="dp-section"><div class="dp-section-title">Deviation items</div><p style="font-size:13px;color:var(--green)">✓ No deviations — auto-approved</p></div>';
+  }
+
+  if (s.notes) html += sec('Notes from AE/SE', [['', s.notes]]);
+  if (s.comment) html += sec('Approver comment', [['From', s.approver], ['Comment', s.comment]]);
+
+  const links = [];
+  if (s.sowLink) links.push(`<a href="${s.sowLink}" target="_blank" style="color:var(--brand);font-size:13px;margin-right:12px">📄 SOW document</a>`);
+  if (s.calcLink) links.push(`<a href="${s.calcLink}" target="_blank" style="color:var(--brand);font-size:13px">📊 Pricing calculator</a>`);
+  if (links.length) html += `<div class="dp-section"><div class="dp-section-title">Links</div><div>${links.join('')}</div></div>`;
+
+  html += sec('Approval status', [
+    ['Status', statusBadge(s.status, s.autoApproved)],
+    ['Approver', s.approver || '—'],
+    ['Date', s.approvedDate || '—'],
+  ]);
+
+  document.getElementById('dp-body').innerHTML = html;
+  document.getElementById('dp-footer').style.display = canApprove ? 'block' : 'none';
+  document.getElementById('dp-comment').value = '';
+  document.getElementById('overlay').classList.add('show');
+  if (focusApproval && canApprove) document.getElementById('dp-comment').focus();
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('show');
+  currentSOW = null;
+}
+
+// ── Approval actions ───────────────────────────────────────────────────────
+async function quickApprove(sheetRow) {
+  const sow = allSOWs.find(s => s.sheetRow === sheetRow);
+  if (!sow) return;
+  await updateStatus(sheetRow, 'Approved', currentUser.name, '', new Date().toLocaleDateString());
+  showToast('SOW approved ✓', 'success');
+}
+
+async function approveSOW() {
+  if (!currentSOW) return;
+  const comment = document.getElementById('dp-comment').value.trim();
+  await updateStatus(currentSOW.sheetRow, 'Approved', currentUser.name, comment, new Date().toLocaleDateString());
+  closeDetail();
+  showToast('SOW approved ✓', 'success');
+}
+
+async function rejectSOW() {
+  if (!currentSOW) return;
+  const comment = document.getElementById('dp-comment').value.trim();
+  if (!comment) { showToast('Please add a rejection reason', 'error'); return; }
+  await updateStatus(currentSOW.sheetRow, 'Rejected', currentUser.name, comment, new Date().toLocaleDateString());
+  closeDetail();
+  showToast('SOW rejected', 'error');
+}
+
+async function requestChanges() {
+  if (!currentSOW) return;
+  const comment = document.getElementById('dp-comment').value.trim();
+  if (!comment) { showToast('Please describe the changes needed', 'error'); return; }
+  await updateStatus(currentSOW.sheetRow, 'Changes Requested', currentUser.name, comment, '');
+  closeDetail();
+  showToast('Changes requested — AE/SE notified');
+}
+
+async function updateStatus(sheetRow, status, approver, comment, date) {
+  try {
+    // Update Status, Approver, Comment, Approved Date columns
+    const updates = [
+      [COL.STATUS, status],
+      [COL.APPROVER, approver],
+      [COL.COMMENT, comment],
+      [COL.APPROVED_DATE, date],
+    ];
+    for (const [col, val] of updates) {
+      await sheetsUpdate(sheetRow, col, val);
+    }
+    // Refresh local data
+    const sow = allSOWs.find(s => s.sheetRow === sheetRow);
+    if (sow) { sow.status = status; sow.approver = approver; sow.comment = comment; sow.approvedDate = date; }
+    renderStats();
+    filterRows();
+  } catch(e) {
+    showToast('Error updating: ' + e.message, 'error');
+    throw e;
+  }
+}
+
+// ── Submit new SOW ─────────────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('dev-items-container').innerHTML = '';
+  devItemCount = 0;
+  document.getElementById('add-modal').classList.add('show');
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('show');
+}
+
+function addDevItem() {
+  devItemCount++;
+  const id = devItemCount;
+  const div = document.createElement('div');
+  div.className = 'dev-adder';
+  div.id = 'dev-item-' + id;
+  div.innerHTML = `<div class="dev-adder-row">
+    <select class="form-input form-select" id="dev-type-${id}">
+      <option value="C1">C1 — Not in product</option>
+      <option value="C2">C2 — Roadmap item</option>
+      <option value="C3">C3 — Open item</option>
+    </select>
+    <input class="form-input" id="dev-title-${id}" placeholder="Short title…">
+    <button class="btn-rm-dev" onclick="document.getElementById('dev-item-${id}').remove()">×</button>
+  </div>
+  <textarea class="form-input" id="dev-detail-${id}" rows="2" placeholder="Details, context, or conditions…" style="margin-top:8px;resize:vertical"></textarea>`;
+  document.getElementById('dev-items-container').appendChild(div);
+}
+
+async function submitSOW() {
+  const g = (id) => document.getElementById(id)?.value?.trim() || '';
+  const customer = g('f-customer');
+  const ae = g('f-ae');
+  const se = g('f-se');
+  const closeDate = g('f-close-date');
+  const cost = g('f-cost');
+  const timeline = g('f-timeline');
+  if (!customer || !ae || !se || !closeDate || !cost || !timeline) {
+    showToast('Please fill all required fields', 'error'); return;
+  }
+
+  // Collect deviation items
+  const devItems = [];
+  for (let i = 1; i <= devItemCount; i++) {
+    const typeEl = document.getElementById('dev-type-' + i);
+    const titleEl = document.getElementById('dev-title-' + i);
+    const detailEl = document.getElementById('dev-detail-' + i);
+    if (typeEl && titleEl && titleEl.value.trim()) {
+      devItems.push({ type: typeEl.value, title: titleEl.value.trim(), detail: detailEl?.value?.trim() || '' });
+    }
+  }
+
+  const c1 = devItems.filter(d => d.type === 'C1').length;
+  const c2 = devItems.filter(d => d.type === 'C2').length;
+  const c3 = devItems.filter(d => d.type === 'C3').length;
+  const devCount = devItems.length;
+  const autoApproved = devCount === 0;
+  const status = autoApproved ? 'Auto-Approved' : 'Pending';
+
+  // Generate SOW ID
+  const sowId = 'SOW-' + new Date().getFullYear() + '-' + String(allSOWs.length + 1).padStart(3, '0');
+  const submitted = new Date().toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+
+  const row = new Array(26).fill('');
+  row[COL.SOW_ID]        = sowId;
+  row[COL.CUSTOMER]      = customer;
+  row[COL.AE]            = ae;
+  row[COL.SE]            = se;
+  row[COL.CLOSE_DATE]    = closeDate;
+  row[COL.SUBMITTED]     = submitted;
+  row[COL.MODULES]       = g('f-modules');
+  row[COL.ERP]           = g('f-erp');
+  row[COL.INTEGRATIONS]  = g('f-integrations');
+  row[COL.COST]          = cost;
+  row[COL.TIMELINE]      = timeline;
+  row[COL.DEV_COUNT]     = devCount;
+  row[COL.C1]            = c1;
+  row[COL.C2]            = c2;
+  row[COL.C3]            = c3;
+  row[COL.DEV_DETAIL]    = JSON.stringify(devItems);
+  row[COL.AUTO_APPROVED] = autoApproved ? 'TRUE' : 'FALSE';
+  row[COL.STATUS]        = status;
+  row[COL.SOW_LINK]      = g('f-sow-link');
+  row[COL.CALC_LINK]     = g('f-calc-link');
+  row[COL.NOTES]         = g('f-notes');
+
+  try {
+    document.querySelector('.btn-primary').disabled = true;
+    document.querySelector('.btn-primary').textContent = 'Submitting…';
+    await sheetsAppend([row]);
+    closeAddModal();
+    showToast(autoApproved ? 'SOW submitted — auto-approved (no deviations) ✓' : 'SOW submitted — pending Manoj\'s approval', 'success');
+    await loadData();
+  } catch(e) {
+    showToast('Error submitting: ' + e.message, 'error');
+  } finally {
+    document.querySelector('.btn-primary').disabled = false;
+    document.querySelector('.btn-primary').textContent = 'Submit for approval';
+  }
+}
+
+// ── Utilities ──────────────────────────────────────────────────────────────
+function showLoading() {
+  document.getElementById('tbl-body').innerHTML = '<tr class="loading-row"><td colspan="12"><span class="spin"></span>Loading…</td></tr>';
+}
+
+function parseDate(str) {
+  if (!str) return null;
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function esc(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+window.onload = initGoogleAuth;
+</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+</html>
